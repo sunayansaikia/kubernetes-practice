@@ -1,2 +1,2 @@
 # kubernetes-practice
-Repo to keep practice resources.
+Repo to keep kubernetes practice resources.
