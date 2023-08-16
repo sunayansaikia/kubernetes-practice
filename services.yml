@@ -1,0 +1,110 @@
+Deploy 3 replicas of v1 nginx-deployment.yaml:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-v1
+  labels:
+    app: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: v1
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: workdir
+          mountPath: /usr/share/nginx/html
+      initContainers:
+      - name: install
+        image: busybox:1.28
+        command:
+        - /bin/sh
+        - -c
+        - "echo Welcome to K8S session1 > /work-dir/index.html"
+        volumeMounts:
+        - name: workdir
+          mountPath: "/work-dir"
+      volumes:
+      - name: workdir
+        emptyDir: {}
+
+
+Create the service:
+# Example for clusterIP nginx-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-svc
+  labels:
+    app: my-app
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  selector:
+    app: my-app
+
+
+Test if the deployment was successful from within a Pod:
+
+# run a wget to the Service my-app-svc
+$ kubectl run -it --rm --restart=Never busybox --image=gcr.io/google-containers/busybox --command -- wget -qO- <my-app-svc-ip>:80
+
+version-1
+
+# Example for NodePort nginx-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-svc2
+  labels:
+    app: my-app
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    nodePort: 30001
+  selector:
+    app: my-app
+
+
+Test if the deployment was successful from within a Pod:
+
+# run a wget to the Service my-app-svc
+$ kubectl run -it --rm --restart=Never busybox --image=gcr.io/google-containers/busybox --command -- wget -qO- <my-app-svc-ip>:80
+
+
+# Example for LoadBalancer 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-svc1
+  labels:
+    app: my-app
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+  selector:
+    app: my-app
+
+https://devopscube.com/setup-ingress-kubernetes-nginx-controller/
