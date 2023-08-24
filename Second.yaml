@@ -986,7 +986,7 @@ spec:
             - /bin/sh
             - -c
             - date; echo Hello from the Kubernetes cluster
-            image: busybox
+            image: k8s.gcr.io/busybox
             name: time-limited-job
             resources: {}
           restartPolicy: Never
