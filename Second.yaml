@@ -790,7 +790,7 @@ spec:
         - /bin/sh
         - -c
         - while true; do echo hello; sleep 10;done
-        image: busybox
+        image: k8s.gcr.io/busybox
         name: busybox
         resources: {}
       restartPolicy: OnFailure
