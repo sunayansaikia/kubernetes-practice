@@ -1,0 +1,26 @@
+ssh my-node1
+mkdir -p /etc/kubernetes/manifests/
+cat <<EOF >/etc/kubernetes/manifests/static-web.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-web
+  labels:
+    role: myrole
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
+EOF
+-----------------------
+go to kubelet configuration and add
+--pod-manifest-path=/etc/kubernetes/manifests/
+-----------------------
+# Run this command on the node where the kubelet is running
+systemctl restart kubelet
+-------------------------------
+kubectl get pods
