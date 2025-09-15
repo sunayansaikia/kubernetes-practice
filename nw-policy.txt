@@ -1,0 +1,85 @@
+1. Deploy Sample App (frontend + backend)
+# app.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: network-demo
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend
+  namespace: network-demo
+  labels:
+    app: backend
+spec:
+  containers:
+  - name: backend
+    image: nginx
+    ports:
+    - containerPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend
+  namespace: network-demo
+  labels:
+    app: frontend
+spec:
+  containers:
+  - name: frontend
+    image: busybox
+    command: ["sleep", "3600"]
+
+Apply it:
+
+$ kubectl apply -f app.yaml
+
+2. Test Connectivity (before applying policy)
+$ kubectl exec -n network-demo frontend -- wget --spider --timeout=1 backend
+
+
+This should succeed initially — there's no network policy, so traffic is allowed by default.
+
+3. Apply NetworkPolicy to Restrict Access
+# network-policy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+
+
+Apply it:
+
+$ kubectl apply -f network-policy.yaml
+
+4. Re-Test Connectivity
+Allowed (frontend to backend):
+$ kubectl exec -n network-demo frontend -- wget --spider --timeout=1 backend
+
+Blocked (other pods to backend):
+
+Try from a test pod:
+
+$ kubectl run testpod --rm -it --image=busybox -n network-demo --restart=Never -- sh
+# Inside testpod shell:
+$ wget --spider --timeout=1 backend
+
+
+You should see connection refused or timeout, because only frontend is allowed to talk to backend.
+
+5. Cleanup
+kubectl delete ns network-demo
