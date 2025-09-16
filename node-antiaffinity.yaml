@@ -1,0 +1,129 @@
+Here’s a sample YAML that prevents a pod from being scheduled on nodes labeled with topology.kubernetes.io/zone=antarctica-east1:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-anti-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
+    nodeAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/zone
+            operator: In
+            values:
+            - antarctica-east1
+  containers:
+  - name: nginx
+    image: registry.k8s.io/pause:2.0
+
+
+Let’s label node01 to match the anti-affinity condition.
+
+For example, assign:
+
+kubectl label nodes node01 topology.kubernetes.io/zone=antarctica-east1
+
+
+Check with:
+
+kubectl get nodes --show-labels
+
+
+You should see the new label on node01.
+
+Save the following in node-anti-affinity.yaml:
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-anti-affinity
+spec:
+  affinity:
+    nodeAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/zone
+            operator: In
+            values:
+            - antarctica-east1
+  containers:
+  - name: nginx
+    image: registry.k8s.io/pause:2.0
+
+
+This configuration tells Kubernetes:
+
+✔ “Don’t schedule this pod on nodes where topology.kubernetes.io/zone=antarctica-east1.”
+
+kubectl apply -f node-anti-affinity.yaml
+
+
+kubectl get pods --output=wide
+
+
+You should see the with-node-anti-affinity pod scheduled on controlplane, because it avoids node01, which has the forbidden label.
+
+
+Test failure case
+
+If all nodes match the anti-affinity condition, the pod will remain in Pending.
+
+For example:
+
+Label controlplane similarly:
+
+kubectl label nodes controlplane topology.kubernetes.io/zone=antarctica-east1
+
+
+Reapply or recreate the pod:
+
+kubectl delete pod with-node-anti-affinity
+kubectl apply -f node-anti-affinity.yaml
+
+
+Now both nodes match the anti-affinity rule → pod stays pending.
+
+Check with:
+
+kubectl get pods --output=wide
+kubectl describe pod with-node-anti-affinity
+
+
+You will see something like:
+
+0/2 nodes are available: 2 node(s) matched node affinity rules and thus were excluded.
+
+✅
+
+
+Preferred Anti-Affinity
+
+You can also use preferredDuringSchedulingIgnoredDuringExecution to tell Kubernetes “prefer not to schedule here if possible but still schedule if needed.”
+
+
+affinity:
+  nodeAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      preference:
+        matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values:
+          - antarctica-east1
+
+
+
+
