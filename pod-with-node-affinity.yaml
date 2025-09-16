@@ -90,6 +90,5 @@ You should see a message like:
 Node Setup	                                       Can the pod be scheduled?	       Where will it go?
 No node has required label	                                  ❌ No	                     Pending
 One node has required label, no preferred                      ✅ Yes	                   That node
-Multiple nodes have required label, one has preferred	         ✅ Yes	                   Node with preferred label is chosen
 Multiple nodes have required label, none have preferred	       ✅ Yes	              Any node matching required label is chosen
 
