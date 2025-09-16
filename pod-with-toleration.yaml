@@ -1,15 +1,143 @@
+Taints are applied to nodes to repel pods — unless the pods have matching tolerations.
+
+Tolerations are applied to pods to allow them to be scheduled on tainted nodes.
+
+Nodes repel/prevent pods by default when they have taints unless a pod tolerates the taint.
+
+✅ Example Scenario with your controlplane and node01 nodes
+
+You can taint node01 so that no pod is scheduled on it unless it tolerates that taint.
+
+✅ Step 1 – Apply a taint to node01
+
+Let's say you want to taint node01 so that only pods with a matching toleration can be scheduled on it.
+
+kubectl taint nodes node01 key=value:NoSchedule
+
+
+For example:
+
+kubectl taint nodes node01 dedicated=special:NoSchedule
+
+
+This taint means:
+
+Any pod without a toleration for dedicated=special won’t be scheduled on node01.
+
+
+Step 2 – Check the node's taints
+kubectl describe node node01
+
+
+In the Taints section, you should see:
+
+dedicated=special:NoSchedule
+
+
+Create a pod without toleration → it should not be scheduled on node01
+
+Example YAML (pod-no-toleration.yaml):
+
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx
-  labels:
-    env: test
+  name: pod-no-toleration
 spec:
   containers:
   - name: nginx
-    image: nginx
-    imagePullPolicy: IfNotPresent
+    image: registry.k8s.io/pause:2.0
+
+
+Apply it:
+
+
+kubectl apply -f pod-no-toleration.yaml
+
+
+Now check:
+
+kubectl get pods --output=wide
+
+
+The pod will not be scheduled on node01.
+
+Create a pod with toleration → it should be scheduled on node01
+
+Example YAML (pod-with-toleration.yaml):
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-with-toleration
+spec:
   tolerations:
-  - key: "example-key"
-    operator: "Exists"
+  - key: "dedicated"
+    operator: "Equal"
+    value: "special"
     effect: "NoSchedule"
+  containers:
+  - name: nginx
+    image: registry.k8s.io/pause:2.0
+
+
+kubectl apply -f pod-with-toleration.yaml
+
+
+kubectl get pods --output=wide
+
+
+You should see pod-with-toleration scheduled on node01 because it tolerates the taint.
+
+ther Taint Effects
+Effect	Meaning
+NoSchedule	Pods won’t be scheduled on this node unless they tolerate the taint
+PreferNoSchedule	Kubernetes tries to avoid scheduling pods here but doesn’t block them
+NoExecute	Pods that don’t tolerate the taint will be evicted if already running
+
+
+Toleration Syntax Explained
+tolerations:
+- key: "dedicated"
+  operator: "Equal"
+  value: "special"
+  effect: "NoSchedule"
+
+
+key: The taint’s key.
+
+operator: How to compare the value (Equal or Exists).
+
+value: The taint’s value.
+
+effect: What type of taint it is (NoSchedule, PreferNoSchedule, NoExecute).
+
+
+
+Real-world Use Cases
+
+Dedicated workloads
+Example: Only a particular job or daemon can run on special hardware.
+
+Node isolation
+Example: Keep regular workloads away from nodes with specific constraints.
+
+Maintenance mode
+Example: Taint nodes before upgrading to prevent new pods from scheduling.
+
+✅ Removing a taint
+
+If you want to remove the taint from node01:
+
+
+kubectl taint nodes node01 dedicated=special:NoSchedule-
+
+
+This will untaint the node, and normal scheduling will resume.
+
+Summary Table
+Mechanism	Purpose
+Taints (on nodes)	Repel pods unless tolerated
+Tolerations (on pods)	Allow pods to be scheduled on tainted nodes
+
+
