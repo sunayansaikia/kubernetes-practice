@@ -305,5 +305,4 @@ spec:
       resources:
         requests:
           storage: 1Gi
-      storageClassName: standard  # Adjust based on your cluster setup
 
