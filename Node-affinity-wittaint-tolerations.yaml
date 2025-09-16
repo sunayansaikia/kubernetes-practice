@@ -1,0 +1,112 @@
+Combining Node Affinity and Taints/Tolerations for Complex Scheduling
+
+In Kubernetes, you can combine Node Affinity and Taints/Tolerations to finely control which pods are scheduled where. This is especially useful when you want:
+
+Pods to prefer or require certain nodes (based on labels)
+
+And at the same time, allow them only on nodes that are tainted (reserved or restricted)
+
+📘 Example Scenario
+
+You have two nodes:
+
+node01 – labeled with topology.kubernetes.io/zone=antarctica-east1, and tainted so that only specific workloads can run on it.
+
+controlplane – a regular node without taints or with other characteristics.
+
+You want to schedule a pod that:
+
+✔ Requires topology.kubernetes.io/zone=antarctica-east1 → node affinity
+✔ Allows scheduling on this node only if it tolerates the taint → taints and tolerations
+
+✅ Step 1 – Setup nodes
+Label the node to match the affinity rule:
+kubectl label nodes node01 topology.kubernetes.io/zone=antarctica-east1
+
+Taint the node to prevent unwanted pods from scheduling:
+kubectl taint nodes node01 dedicated=special:NoSchedule
+
+
+Verify both:
+
+kubectl get nodes --show-labels
+kubectl describe node node01
+
+✅ Step 2 – Create a pod combining both rules
+
+Save this YAML as pod-affinity-taint.yaml:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-affinity-taint
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: topology.kubernetes.io/zone
+            operator: In
+            values:
+            - antarctica-east1
+  tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "special"
+    effect: "NoSchedule"
+  containers:
+  - name: nginx
+    image: registry.k8s.io/pause:2.0
+
+Explanation:
+
+✔ The pod requires nodes in zone antarctica-east1 → affinity rule
+✔ The pod tolerates the taint dedicated=special:NoSchedule → toleration rule
+✔ So it will be scheduled on node01 only if both rules are satisfied
+
+✅ Step 3 – Apply the pod
+kubectl apply -f pod-affinity-taint.yaml
+
+✅ Step 4 – Verify scheduling
+kubectl get pods --output=wide
+
+
+You should see:
+
+The pod is running on node01, because:
+
+It matches the node affinity.
+
+It tolerates the node’s taint.
+
+You can also inspect it in detail:
+
+kubectl describe pod pod-affinity-taint
+
+✅ Step 5 – Testing failure scenarios
+Scenario 1 – Node doesn’t match affinity → pod stays pending
+
+Remove or change the node label:
+
+kubectl label nodes node01 topology.kubernetes.io/zone-
+
+
+Or:
+
+kubectl label nodes node01 topology.kubernetes.io/zone=antarctica-west1 --overwrite
+
+
+Reapply the pod:
+
+kubectl delete pod pod-affinity-taint
+kubectl apply -f pod-affinity-taint.yaml
+
+
+Check:
+
+kubectl get pods --output=wide
+kubectl describe pod pod-affinity-taint
+
+
+You’ll see the pod is pending because the affinity rule is violated.
