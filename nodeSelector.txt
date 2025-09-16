@@ -1,10 +1,10 @@
 kubectl get nodes --show-labels
--------------------------------
-kubectl label nodes <your-node-name> disktype=ssd
---------------------------------
-kubectl get nodes --show-labels
---------------------------------
 
+kubectl label nodes controlplane disktype=ssd
+
+kubectl get nodes --show-labels
+
+vi nodeselector.yaml
 
 apiVersion: v1
 kind: Pod
@@ -20,19 +20,33 @@ spec:
   nodeSelector:
     disktype: ssd
 
---------------------------------
 kubectl apply -f nodeselector.yaml
---------------------------------
+
+
 kubectl get pods --output=wide
--------------------------------
+
+
+
+Step 5 – Testing failure case
+
+kubectl label nodes controlplane disktype=hdd --overwrite
+
+kubectl delete pod nginx
+kubectl apply -f nodeselector.yaml
+
+
+kubectl get pods --output=wide
+
+
+
 apiVersion: v1
 kind: Pod
 metadata:
   name: nginx
 spec:
-  nodeName: foo-node # schedule pod to specific node
+  nodeName: controlplane # schedule pod to specific node
   containers:
   - name: nginx
     image: nginx
     imagePullPolicy: IfNotPresent
--------------------------------------
+
