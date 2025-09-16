@@ -1,3 +1,31 @@
+Since only one node needs to have the required label to test scheduling, let’s add it to node01.
+
+kubectl label nodes node01 topology.kubernetes.io/zone=antarctica-east1
+
+
+Verify the label was added:
+
+kubectl get nodes --show-labels
+
+
+You should see topology.kubernetes.io/zone=antarctica-east1 listed under node01.
+
+If you want to test how Kubernetes prefers nodes when both meet the requirement but one also matches the preference, you can add the preferred label.
+
+For example, add it to controlplane:
+
+kubectl label nodes controlplane another-node-label-key=another-node-label-value
+
+
+Check:
+
+kubectl get nodes --show-labels
+
+
+You should see the new label on controlplane.
+
+Save the YAML into a file named node-affinity.yaml. Example content:
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -24,3 +52,44 @@ spec:
   containers:
   - name: with-node-affinity
     image: registry.k8s.io/pause:2.0
+
+
+kubectl apply -f node-affinity.yaml
+
+
+kubectl get pods --output=wide
+
+
+kubectl describe pod with-node-affinity
+
+
+Testing scheduling failure
+
+Remove the required label from node01:
+
+kubectl label nodes node01 topology.kubernetes.io/zone-
+
+
+Recreate the pod:
+
+kubectl delete pod with-node-affinity
+kubectl apply -f node-affinity.yaml
+
+
+Now it should remain in Pending. Verify with:
+
+kubectl get pods --output=wide
+kubectl describe pod with-node-affinity
+
+
+You should see a message like:
+
+0/2 nodes are available: 1 node(s) had taint, 1 node(s) didn't match node affinity.
+
+
+Node Setup	                                       Can the pod be scheduled?	       Where will it go?
+No node has required label	                                  ❌ No	                     Pending
+One node has required label, no preferred                      ✅ Yes	                   That node
+Multiple nodes have required label, one has preferred	         ✅ Yes	                   Node with preferred label is chosen
+Multiple nodes have required label, none have preferred	       ✅ Yes	              Any node matching required label is chosen
+
