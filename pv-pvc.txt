@@ -271,3 +271,38 @@ kubectl run busybox --image=busybox --restart=Never -- sleep 3600
 kubectl cp busybox:/etc/passwd ./passwd # kubectl cp command
 # previous command might report an error, feel free to ignore it since copy command works
 cat passwd
+
+____________________________________________________________________________________________________
+
+StatefulSets
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nginx-statefulset
+spec:
+  serviceName: "nginx"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+
