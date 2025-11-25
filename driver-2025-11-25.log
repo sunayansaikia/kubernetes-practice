@@ -1,0 +1,48 @@
+23/11/24 10:01:23 INFO SparkContext: Running Spark version 3.5.1
+23/11/24 10:01:23 INFO SparkContext: OS: Linux, Arch: amd64, JVM: 17.0.8
+23/11/24 10:01:23 INFO SparkContext: Submitted application: etl_job_daily
+23/11/24 10:01:24 INFO KubernetesClusterManager: Requesting executor containers from Kubernetes.
+
+23/11/24 10:02:01 INFO DAGScheduler: Submitting Stage 0 (MapPartitionsRDD[12] at parquet at ETLJob.scala:88)
+23/11/24 10:02:01 INFO TaskSchedulerImpl: Adding task set 0.0 with 1000 tasks
+23/11/24 10:02:02 INFO KubernetesClusterSchedulerBackend: Registered executor 1 with host k8s-node-1
+23/11/24 10:02:03 INFO KubernetesClusterSchedulerBackend: Registered executor 2 with host k8s-node-2
+
+23/11/24 10:05:14 WARN YarnAllocator: Container container_1699999999999_0001_01_000005 exited with non-zero status 137.
+23/11/24 10:05:14 WARN YarnAllocator: Container killed by YARN for exceeding memory limits. 7.5 GB of 7 GB physical memory used. Consider boosting spark.executor.memoryOverhead.
+23/11/24 10:05:14 INFO TaskSetManager: Lost task 35.0 in stage 0.0 (TID 123) on executor 1 (k8s-node-1) due to ExecutorLostFailure
+
+23/11/24 10:05:14 ERROR TaskSetManager: Task 35 in stage 0.0 failed 4 times; aborting job
+23/11/24 10:05:14 INFO DAGScheduler: Job 0 failed: count at ETLJob.scala:142, took 192.345 s
+
+23/11/24 10:05:14 ERROR DAGScheduler: ShuffleMapStage 0 (parquet at ETLJob.scala:88) failed in 4.0 tries
+org.apache.spark.SparkException: Job aborted due to stage failure: Task 35 in stage 0.0 ran out of memory.
+    at org.apache.spark.scheduler.DAGScheduler.failJobAndIndependentStages(DAGScheduler.scala:2479)
+    at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2(DAGScheduler.scala:2427)
+    at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2$adapted(DAGScheduler.scala:2426)
+    at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)
+    at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)
+    at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)
+    at org.apache.spark.scheduler.DAGScheduler.abortStage(DAGScheduler.scala:2426)
+Caused by: java.lang.OutOfMemoryError: Java heap space
+    at org.apache.spark.sql.execution.columnar.CachedBatchSerializer.compressedSize(CachedBatchSerializer.scala:95)
+    at org.apache.spark.sql.execution.columnar.InMemoryRelation.$anonfun$withStats$1(InMemoryRelation.scala:78)
+    at org.apache.spark.sql.execution.columnar.InMemoryRelation.$anonfun$withStats$1$adapted(InMemoryRelation.scala:75)
+    at org.apache.spark.sql.execution.MetricUtils$.withNewExecutionId(MetricUtils.scala:46)
+    at org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:111)
+
+23/11/24 10:05:15 WARN KubernetesClusterSchedulerBackend: Executor 1 on k8s-node-1 lost: Container killed by Kubernetes. Exit code 137 (OOMKilled)
+23/11/24 10:05:15 INFO KubernetesClusterSchedulerBackend: Requesting a new executor to replace 1.
+
+23/11/24 10:05:45 ERROR ApplicationMaster: User class threw exception: org.apache.spark.SparkException: Job aborted due to stage failure: Task 35 in stage 0.0 ran out of memory.
+org.apache.spark.SparkException: Job aborted due to stage failure: Task 35 in stage 0.0 ran out of memory.
+    at org.apache.spark.scheduler.DAGScheduler.failJobAndIndependentStages(DAGScheduler.scala:2479)
+    at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2(DAGScheduler.scala:2427)
+    ... 10 more
+Caused by: java.lang.OutOfMemoryError: GC overhead limit exceeded
+    at org.apache.spark.sql.execution.columnar.CachedBatchSerializer$.compress(CachedBatchSerializer.scala:127)
+    at org.apache.spark.sql.execution.columnar.InMemoryRelation.$anonfun$withStats$2(InMemoryRelation.scala:82)
+
+23/11/24 10:05:45 INFO ShutdownHookManager: Shutdown hook called
+23/11/24 10:05:45 INFO SparkContext: Successfully stopped SparkContext
+23/11/24 10:05:45 INFO AppStatusListener: etl_job_daily failed with final status FAILED
