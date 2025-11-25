@@ -1,0 +1,36 @@
+23/11/24 10:02:02 INFO Executor: Starting executor ID 1 on host k8s-node-1
+23/11/24 10:02:02 INFO Executor: Using REPL class URI: spark://Executor
+23/11/24 10:02:03 INFO MemoryStore: Block broadcast_0 stored as values in memory (estimated size 96.0 KiB)
+23/11/24 10:02:04 INFO BlockManagerInfo: Added broadcast_0_piece0 in memory on k8s-node-1:39445 (size: 96.0 KiB, free: 7.0 GiB)
+
+23/11/24 10:03:10 INFO Executor: Running task 35.0 in stage 0.0 (TID 123)
+23/11/24 10:03:10 INFO HadoopRDD: Input split: s3://my-bucket/large-dataset/part-00035.snappy.parquet
+23/11/24 10:03:13 WARN MemoryStore: Not enough space to cache rdd_12_35 in memory! (computed 512.0 MiB so far)
+23/11/24 10:03:13 INFO BlockManager: Removing RDD 5
+23/11/24 10:03:15 WARN TaskMemoryManager: Failed to allocate a page (262144 bytes) of memory, try again.
+23/11/24 10:03:16 WARN TaskMemoryManager: Failed to allocate a page (262144 bytes) of memory, try again.
+
+23/11/24 10:04:02 ERROR Executor: Exception in task 35.0 in stage 0.0 (TID 123)
+org.apache.spark.SparkException: Fetch failed (attempt 4) for shuffle block shuffle_0_0_35_0
+    at org.apache.spark.storage.ShuffleBlockFetcherIterator.throwFetchFailedException(ShuffleBlockFetcherIterator.scala:784)
+    at org.apache.spark.storage.ShuffleBlockFetcherIterator.next(ShuffleBlockFetcherIterator.scala:669)
+    at org.apache.spark.storage.ShuffleBlockFetcherIterator.next(ShuffleBlockFetcherIterator.scala:96)
+    at scala.collection.Iterator$$anon$10.next(Iterator.scala:459)
+    at org.apache.spark.util.CompletionIterator.next(CompletionIterator.scala:29)
+Caused by: io.netty.handler.timeout.ReadTimeoutException: null
+    at io.netty.handler.timeout.ReadTimeoutHandler.channelRead(ReadTimeoutHandler.java:266)
+
+23/11/24 10:04:03 WARN Executor: Issue communicating with shuffle service, will retry.
+23/11/24 10:04:10 WARN Executor: Executor lost shuffle files; fetching again may cause retries.
+
+23/11/24 10:05:13 ERROR Executor: OutOfMemoryError in task 35.0 in stage 0.0 (TID 123)
+java.lang.OutOfMemoryError: Java heap space
+    at org.apache.spark.sql.catalyst.expressions.codegen.BufferHolder.<init>(BufferHolder.java:55)
+    at org.apache.spark.sql.catalyst.expressions.codegen.UnsafeRowWriter.<init>(UnsafeRowWriter.java:47)
+    at org.apache.spark.sql.execution.BufferedRowIterator.init(BufferedRowIterator.java:38)
+
+23/11/24 10:05:14 INFO Executor: Executor killed due to OOM, sending exit code 137 back to driver.
+23/11/24 10:05:14 INFO CoarseGrainedExecutorBackend: Driver commanded a shutdown
+23/11/24 10:05:14 INFO MemoryStore: MemoryStore cleared
+23/11/24 10:05:14 INFO BlockManager: BlockManager stopped
+23/11/24 10:05:14 INFO Executor: Finished executor ID 1 on host k8s-node-1
