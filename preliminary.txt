@@ -15,11 +15,11 @@ wget \
 
 nohup python3 -m llama_cpp.server \
   --model /content/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf \
-  --port 8080 \
+  --port 8083 \
   > qwen25.log 2>&1 &
 
 
 nohup python3 -m llama_cpp.server \
   --model /content/models/qwen3-3b-instruct-q4_k_m.gguf \
-  --port 8081 \
+  --port 8084 \
   > qwen3.log 2>&1 &
