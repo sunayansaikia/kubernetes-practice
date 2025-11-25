@@ -1,0 +1,25 @@
+pip install "mcp[cli]" langgraph langchain langchain-openai
+pip install llama-cpp-python starlette_context
+
+mkdir -p /content/models
+cd /content/models
+
+wget \
+  "https://huggingface.co/bartowski/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-1.5B-Instruct-Q4_K_M.gguf" \
+  -O qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+
+
+wget \
+  "https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf" \
+  -O qwen3-3b-instruct-q4_k_m.gguf
+
+nohup python3 -m llama_cpp.server \
+  --model /content/models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf \
+  --port 8080 \
+  > qwen25.log 2>&1 &
+
+
+nohup python3 -m llama_cpp.server \
+  --model /content/models/qwen3-3b-instruct-q4_k_m.gguf \
+  --port 8081 \
+  > qwen3.log 2>&1 &
